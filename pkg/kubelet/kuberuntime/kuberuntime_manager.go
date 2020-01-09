@@ -19,6 +19,8 @@ package kuberuntime
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"time"
 
@@ -782,6 +784,20 @@ func (m *kubeGenericRuntimeManager) SyncPod(pod *v1.Pod, podStatus *kubecontaine
 		}
 	}
 
+	// call node-export to start monitor pod
+	url := fmt.Sprintf("http://localhost:9001/monitor/start?pod=%s",pod.UID)
+	resp, err := http.Get(url)
+	defer resp.Body.Close()
+	if err != nil {
+		klog.Error(err)
+		return
+	} else {
+		body, _ := ioutil.ReadAll(resp.Body)
+		klog.V(4).Infof("start monitor pod %s, status: %s", pod.UID, string(body))
+	}
+
+
+
 	return
 }
 
@@ -824,6 +840,18 @@ func (m *kubeGenericRuntimeManager) doBackOff(pod *v1.Pod, container *v1.Contain
 // it is useful when doing SIGKILL for hard eviction scenarios, or max grace period during soft eviction scenarios.
 func (m *kubeGenericRuntimeManager) KillPod(pod *v1.Pod, runningPod kubecontainer.Pod, gracePeriodOverride *int64) error {
 	err := m.killPodWithSyncResult(pod, runningPod, gracePeriodOverride)
+
+	// call node-export to start monitor pod
+	url := fmt.Sprintf("http://localhost:9001/monitor/stop?pod=%s", pod.UID)
+	resp, err1 := http.Get(url)
+	if err1 != nil {
+		klog.Error(err1)
+	} else {
+		defer resp.Body.Close()
+		body, _ := ioutil.ReadAll(resp.Body)
+		klog.V(4).Infof("stop monitor pod %s, status: %s", pod.UID, string(body))
+	}
+
 	return err.Error()
 }
 
