@@ -786,7 +786,14 @@ func (m *kubeGenericRuntimeManager) SyncPod(pod *v1.Pod, podStatus *kubecontaine
 
 	// call node-export to start monitor pod
 	url := fmt.Sprintf("http://localhost:9001/monitor/start?pod=%s",pod.UID)
-	resp, err := http.Get(url)
+	if app, ok := pod.Labels["app"]; ok {
+		url += "&app=" + app
+	}
+
+	client := http.Client{
+		Timeout: time.Second * 1}
+	resp, err := client.Get(url)
+
 	defer resp.Body.Close()
 	if err != nil {
 		klog.Error(err)
@@ -795,8 +802,6 @@ func (m *kubeGenericRuntimeManager) SyncPod(pod *v1.Pod, podStatus *kubecontaine
 		body, _ := ioutil.ReadAll(resp.Body)
 		klog.V(4).Infof("start monitor pod %s, status: %s", pod.UID, string(body))
 	}
-
-
 
 	return
 }
