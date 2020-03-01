@@ -791,7 +791,8 @@ func (m *kubeGenericRuntimeManager) SyncPod(pod *v1.Pod, podStatus *kubecontaine
 	}
 
 	client := http.Client{
-		Timeout: time.Second * 1}
+		Timeout: time.Second * 1,
+	}
 	resp, err := client.Get(url)
 
 	defer resp.Body.Close()
@@ -848,11 +849,16 @@ func (m *kubeGenericRuntimeManager) KillPod(pod *v1.Pod, runningPod kubecontaine
 
 	// call node-export to start monitor pod
 	url := fmt.Sprintf("http://localhost:9001/monitor/stop?pod=%s", pod.UID)
-	resp, err1 := http.Get(url)
+
+	client := http.Client{
+		Timeout: time.Second * 1,
+	}
+	resp, err1 := client.Get(url)
+
+	defer resp.Body.Close()
 	if err1 != nil {
 		klog.Error(err1)
 	} else {
-		defer resp.Body.Close()
 		body, _ := ioutil.ReadAll(resp.Body)
 		klog.V(4).Infof("stop monitor pod %s, status: %s", pod.UID, string(body))
 	}
