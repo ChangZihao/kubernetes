@@ -795,11 +795,11 @@ func (m *kubeGenericRuntimeManager) SyncPod(pod *v1.Pod, podStatus *kubecontaine
 	}
 	resp, err := client.Get(url)
 
-	defer resp.Body.Close()
 	if err != nil {
 		klog.Error(err)
 		return
 	} else {
+		defer resp.Body.Close()
 		body, _ := ioutil.ReadAll(resp.Body)
 		klog.V(4).Infof("start monitor pod %s, status: %s", pod.UID, string(body))
 	}
@@ -855,10 +855,10 @@ func (m *kubeGenericRuntimeManager) KillPod(pod *v1.Pod, runningPod kubecontaine
 	}
 	resp, err1 := client.Get(url)
 
-	defer resp.Body.Close()
 	if err1 != nil {
 		klog.Error(err1)
 	} else {
+		defer resp.Body.Close()
 		body, _ := ioutil.ReadAll(resp.Body)
 		klog.V(4).Infof("stop monitor pod %s, status: %s", pod.UID, string(body))
 	}
